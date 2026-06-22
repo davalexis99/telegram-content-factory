@@ -38,8 +38,9 @@ class TelegramService:
             logger.error("Telegram API returned not ok: %s", data)
             return []
 
+        results = data.get("result", [])
         messages: list[IncomingMessage] = []
-        for update in data.get("result", []):
+        for update in results:
             self._offset = update["update_id"] + 1
 
             # Handle callback queries (inline keyboard presses)
