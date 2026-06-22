@@ -21,7 +21,7 @@ OPENAI_MODEL: str = "gpt-4.1"
 
 # Notion
 NOTION_API_KEY: str = os.getenv("NOTION_API_KEY", "")
-NOTION_PARENT_PAGE_ID: str = os.getenv("NOTION_PARENT_PAGE_ID", "")
+NOTION_DATABASE_ID: str = os.getenv("NOTION_DATABASE_ID", "")
 NOTION_API_VERSION: str = "2022-06-28"
 
 # Supabase

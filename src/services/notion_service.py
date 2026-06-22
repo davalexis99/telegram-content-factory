@@ -1,8 +1,10 @@
-"""Notion API service for creating pages."""
+"""Notion API service — adds accepted content to the Content Factory database."""
 
 import httpx
+from datetime import datetime, timezone
 
-from config.settings import NOTION_API_KEY, NOTION_API_VERSION, NOTION_PARENT_PAGE_ID
+from config.settings import NOTION_API_KEY, NOTION_API_VERSION, NOTION_DATABASE_ID
+from models.content import ContentType
 from utils.logger import get_logger
 from utils.retry import retry
 
@@ -16,37 +18,44 @@ HEADERS = {
     "Content-Type": "application/json",
 }
 
-
-def _format_page_id(raw: str) -> str:
-    """Insert hyphens into a 32-char hex page ID to make a valid UUID."""
-    clean = raw.strip().replace("-", "")
-    if len(clean) == 32:
-        return f"{clean[:8]}-{clean[8:12]}-{clean[12:16]}-{clean[16:20]}-{clean[20:]}"
-    return raw
+TYPE_LABELS: dict[ContentType, str] = {
+    ContentType.LINKEDIN_POST: "LinkedIn Post",
+    ContentType.TWITTER_THREAD: "Twitter Thread",
+    ContentType.NOTION_PAGE: "Notion Page",
+}
 
 
 @retry(exceptions=(Exception,))
-def create_page(title: str, content: str) -> str:
-    """Create a Notion page under the configured parent. Returns the page URL."""
-    page_id = _format_page_id(NOTION_PARENT_PAGE_ID)
-
-    children = [
-        {
-            "object": "block",
-            "type": "paragraph",
-            "paragraph": {
-                "rich_text": [{"text": {"content": chunk[:2000]}}],
-            },
-        }
-        for chunk in (content[i : i + 2000] for i in range(0, len(content), 2000))
-    ]
-
+def add_to_database(
+    title: str,
+    source_idea: str,
+    content: str,
+    content_type: ContentType,
+    tokens: int,
+) -> str:
+    """Add a row to the Content Factory database. Returns the page URL."""
     body = {
-        "parent": {"page_id": page_id},
+        "parent": {"database_id": NOTION_DATABASE_ID},
         "properties": {
-            "title": {"title": [{"text": {"content": title[:100]}}]},
+            "Title": {"title": [{"text": {"content": title[:100]}}]},
+            "Type": {
+                "type": "select",
+                "select": {"name": TYPE_LABELS.get(content_type, "LinkedIn Post")},
+            },
+            "Source Idea": {
+                "type": "rich_text",
+                "rich_text": [{"text": {"content": source_idea[:2000]}}],
+            },
+            "Content": {
+                "type": "rich_text",
+                "rich_text": [{"text": {"content": content[:2000]}}],
+            },
+            "Tokens": {"type": "number", "number": tokens},
+            "Created": {
+                "type": "date",
+                "date": {"start": datetime.now(timezone.utc).isoformat()},
+            },
         },
-        "children": children,
     }
 
     resp = httpx.post(f"{NOTION_BASE}/pages", headers=HEADERS, json=body, timeout=30)
@@ -55,5 +64,5 @@ def create_page(title: str, content: str) -> str:
 
     page_id: str = data.get("id", "")
     url = f"https://notion.so/{page_id.replace('-', '')}"
-    logger.info("Created Notion page: %s", url)
+    logger.info("Added to database: %s → %s", title, url)
     return url

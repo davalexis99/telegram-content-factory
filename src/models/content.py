@@ -20,6 +20,9 @@ class IncomingMessage:
     text: str
     received_at: datetime = field(default_factory=datetime.utcnow)
     content_type: ContentType = ContentType.UNKNOWN
+    # Callback fields (inline keyboard presses)
+    callback_data: str | None = None
+    callback_message_id: str | None = None
 
 
 @dataclass
