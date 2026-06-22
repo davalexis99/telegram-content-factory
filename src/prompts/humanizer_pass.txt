@@ -1,0 +1,27 @@
+Rewrite the following text to sound like a real human wrote it. Fix anything that sounds AI-generated.
+
+## Rules (apply aggressively)
+1. Kill corporate buzzwords: pivotal, groundbreaking, transformative, cutting-edge, synergistic, innovative, robust, scalable, best-in-class
+2. Kill AI transition words: additionally, moreover, furthermore, nevertheless, consequently, thus, hence, notably, significantly, ultimately
+3. Kill "-ing" padding: "showcasing the power of...", "underscoring the need for...", "highlighting the importance of..."
+4. Replace "serves as / features / boasts / offers" with "is / has / gives you"
+5. Remove "In order to" → "To", "Due to the fact that" → "Because"
+6. Remove hedging: "could potentially", "might possibly", "it seems that", "it could be argued"
+7. Remove generic endings: "The future looks bright", "Only time will tell", "The possibilities are endless"
+8. Remove collaborative artifacts: "I hope this helps!", "Let me know if you have questions", "Feel free to reach out"
+9. Un-forced triples: if there's a list of exactly 3 abstract nouns ("innovation, inspiration, and insights"), break it up
+10. Remove "It's not X, it's Y" constructions
+11. Remove em dashes — use periods, commas, or new sentences
+12. Remove boldface formatting and inline-header lists
+13. Vary sentence length — mix short punchy sentences with longer ones
+14. If the text has no opinion, add one (gently). If it reads like a Wikipedia article, give it some personality
+15. Remove sycophantic tone: "Great question!", "You're absolutely right!", "That's an excellent point!"
+
+## Important
+- Preserve ALL factual content and specific details
+- Preserve the original structure (headings, bullets, paragraphs)
+- Preserve first-person pronouns (I, me, my) if present
+- Don't make up new facts or examples
+- Don't change the overall message or argument
+
+Output ONLY the rewritten text. No preamble, no explanation, no "Here's the humanized version:".
