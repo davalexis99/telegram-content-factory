@@ -45,10 +45,10 @@ sessions: dict[str, Session] = {}
 WELCOME = (
     "Send me a raw idea or topic and I'll turn it into a LinkedIn post, "
     "Twitter thread, or Notion page.\n\n"
-    "After you get the result, reply with:\n"
-    "• *accept* — save to Notion\n"
-    "• *rewrite* — request changes\n"
-    "• *quit* — start over"
+    "After you get the result:\n"
+    "• /accept — save to Notion\n"
+    "• /rewrite — request changes\n"
+    "• /quit — start over"
 )
 
 FEEDBACK_PROMPT = "What would you like changed? Send your feedback and I'll regenerate."
@@ -77,7 +77,7 @@ def _format_preview(result: GeneratedContent) -> str:
         f"{emoji} *{type_name}* ({result.token_usage} tokens)\n\n"
         f"{result.output_text}\n\n"
         f"━━━━━━━━━━━━━━\n"
-        f"_Reply:_ *accept* / *rewrite* / *quit*"
+        f"_Reply:_ /accept /rewrite /quit"
     )
 
 
@@ -194,7 +194,7 @@ async def handle_feedback(telegram: TelegramService, msg, session: Session) -> N
 
 # ── Router ───────────────────────────────────────────────────
 
-COMMANDS = {"accept", "rewrite", "quit"}
+COMMANDS = {"/accept", "/rewrite", "/quit"}
 
 
 async def dispatch(telegram: TelegramService, msg) -> None:
@@ -210,13 +210,13 @@ async def dispatch(telegram: TelegramService, msg) -> None:
         await telegram.send(chat_id, WELCOME, parse_mode="Markdown")
         return
 
-    # Command in any state
+    # Command in AWAITING_DECISION state
     if text in COMMANDS and session.state == State.AWAITING_DECISION:
-        if text == "accept":
+        if text == "/accept":
             await handle_accept(telegram, msg, session)
-        elif text == "rewrite":
+        elif text == "/rewrite":
             await handle_rewrite(telegram, msg, session)
-        elif text == "quit":
+        elif text == "/quit":
             await handle_quit(telegram, msg, session)
         return
 
