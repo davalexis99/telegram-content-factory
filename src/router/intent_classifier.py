@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from config.settings import OPENAI_API_KEY
+from config.settings import DEEPSEEK_API_KEY, OPENAI_API_KEY
 from models.content import ContentType
 from utils.logger import get_logger
 
@@ -59,8 +59,8 @@ def _ai_classify(text: str) -> ContentType:
 
 def classify_intent(text: str) -> ContentType:
     """Classify a user message into a content type. Rules first, AI fallback."""
-    if not OPENAI_API_KEY:
-        logger.warning("No OpenAI key — using rules only")
+    if not (DEEPSEEK_API_KEY or OPENAI_API_KEY):
+        logger.warning("No LLM API key set — using rules only")
         return _rule_classify(text) or ContentType.UNKNOWN
 
     result = _rule_classify(text)

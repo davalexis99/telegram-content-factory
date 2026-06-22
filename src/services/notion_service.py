@@ -17,9 +17,19 @@ HEADERS = {
 }
 
 
+def _format_page_id(raw: str) -> str:
+    """Insert hyphens into a 32-char hex page ID to make a valid UUID."""
+    clean = raw.strip().replace("-", "")
+    if len(clean) == 32:
+        return f"{clean[:8]}-{clean[8:12]}-{clean[12:16]}-{clean[16:20]}-{clean[20:]}"
+    return raw
+
+
 @retry(exceptions=(Exception,))
 def create_page(title: str, content: str) -> str:
     """Create a Notion page under the configured parent. Returns the page URL."""
+    page_id = _format_page_id(NOTION_PARENT_PAGE_ID)
+
     children = [
         {
             "object": "block",
@@ -32,7 +42,7 @@ def create_page(title: str, content: str) -> str:
     ]
 
     body = {
-        "parent": {"page_id": NOTION_PARENT_PAGE_ID},
+        "parent": {"page_id": page_id},
         "properties": {
             "title": {"title": [{"text": {"content": title[:100]}}]},
         },

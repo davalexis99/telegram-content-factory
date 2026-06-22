@@ -55,7 +55,8 @@ async def process_message(telegram: TelegramService, msg) -> None:
 
     # Step 3: respond
     response_text = _format_response(result)
-    await telegram.send(chat_id, response_text)
+    use_markdown = result.content_type != ContentType.NOTION_PAGE
+    await telegram.send(chat_id, response_text, parse_mode="Markdown" if use_markdown else None)
 
 
 def _format_response(result) -> str:

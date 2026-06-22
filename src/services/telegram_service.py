@@ -55,17 +55,17 @@ class TelegramService:
             logger.info("Received %d message(s)", len(messages))
         return messages
 
-    async def send(self, chat_id: str, text: str) -> bool:
-        """Send a Markdown-formatted message to a chat."""
+    async def send(self, chat_id: str, text: str, parse_mode: str | None = "Markdown") -> bool:
+        """Send a message to a chat. Set parse_mode=None for plain text."""
+        payload: dict = {"chat_id": chat_id, "text": text[:4096]}
+        if parse_mode:
+            payload["parse_mode"] = parse_mode
+
         async with httpx.AsyncClient() as client:
             try:
                 resp = await client.post(
                     f"{self.base_url}/sendMessage",
-                    json={
-                        "chat_id": chat_id,
-                        "text": text[:4096],
-                        "parse_mode": "Markdown",
-                    },
+                    json=payload,
                     timeout=10,
                 )
                 resp.raise_for_status()
