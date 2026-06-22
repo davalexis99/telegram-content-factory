@@ -45,10 +45,11 @@ sessions: dict[str, Session] = {}
 WELCOME = (
     "Send me a raw idea or topic and I'll turn it into a LinkedIn post, "
     "Twitter thread, or Notion page.\n\n"
-    "After you get the result:\n"
+    "Commands (work anytime):\n"
     "• /accept — save to Notion\n"
     "• /rewrite — request changes\n"
-    "• /quit — start over"
+    "• /quit — start over (aliases: /q, /cancel, /reset)\n"
+    "• /start — this message"
 )
 
 FEEDBACK_PROMPT = "What would you like changed? Send your feedback and I'll regenerate."
@@ -194,38 +195,73 @@ async def handle_feedback(telegram: TelegramService, msg, session: Session) -> N
 
 # ── Router ───────────────────────────────────────────────────
 
-COMMANDS = {"/accept", "/rewrite", "/quit"}
+# Commands matched by prefix — /q, /qu, /qui, /quit all resolve to "quit"
+COMMAND_MAP: dict[str, str] = {
+    "/accept": "accept",
+    "/acc": "accept",
+    "/ac": "accept",
+    "/rewrite": "rewrite",
+    "/re": "rewrite",
+    "/rw": "rewrite",
+    "/quit": "quit",
+    "/q": "quit",
+    "/cancel": "quit",
+    "/reset": "quit",
+    "/start": "start",
+}
+
+
+def _resolve_command(text: str) -> str | None:
+    """Resolve a text to a command name, or None. Matches by prefix."""
+    text = text.strip().lower()
+    # Exact match first
+    if text in COMMAND_MAP:
+        return COMMAND_MAP[text]
+    # Prefix match (e.g., /qui → /quit)
+    for cmd, action in sorted(COMMAND_MAP.items(), key=lambda x: -len(x[0])):
+        if text.startswith(cmd):
+            return action
+    return None
 
 
 async def dispatch(telegram: TelegramService, msg) -> None:
-    """Route a message based on session state and content."""
+    """Route a message. Commands always work, regardless of state."""
     chat_id = msg.chat_id
     session = _get_session(chat_id)
     text = msg.text.strip().lower()
 
-    # /start always resets
-    if text == "/start":
+    # ── Commands (always active) ──
+    cmd = _resolve_command(text)
+    if cmd == "start":
         session.state = State.AWAITING_IDEA
         session.last_result = None
         await telegram.send(chat_id, WELCOME, parse_mode="Markdown")
         return
 
-    # Command in AWAITING_DECISION state
-    if text in COMMANDS and session.state == State.AWAITING_DECISION:
-        if text == "/accept":
-            await handle_accept(telegram, msg, session)
-        elif text == "/rewrite":
-            await handle_rewrite(telegram, msg, session)
-        elif text == "/quit":
-            await handle_quit(telegram, msg, session)
+    if cmd == "quit":
+        await handle_quit(telegram, msg, session)
         return
 
-    # If pending feedback, the text IS the feedback
+    if cmd == "accept":
+        if session.last_result is None:
+            await telegram.send(chat_id, "Nothing to save right now. Send me an idea first!")
+        else:
+            await handle_accept(telegram, msg, session)
+        return
+
+    if cmd == "rewrite":
+        if session.last_result is None:
+            await telegram.send(chat_id, "Nothing to rewrite. Send me an idea first!")
+        else:
+            await handle_rewrite(telegram, msg, session)
+        return
+
+    # ── State-based routing (only for non-commands) ──
     if session.state == State.AWAITING_FEEDBACK:
         await handle_feedback(telegram, msg, session)
         return
 
-    # Otherwise, treat as a new idea
+    # Everything else: treat as a new idea
     await handle_idea(telegram, msg, session)
 
 
